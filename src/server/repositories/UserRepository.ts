@@ -2,21 +2,50 @@ import { Op, Transaction, } from 'sequelize';
 import { User, } from '../database/models';
 import { UserStatus, } from '../enums';
 
-interface IFindByEmailOptions {
+interface ITransaction {
 	transaction?: Transaction;
 }
 
-interface IFindByLoginOptions {
-	transaction?: Transaction;
+interface IFindByLoginOptions extends ITransaction {
 	scope?: string;
 }
 
-interface ICreateOptions {
-	transaction?: Transaction;
+interface ISearchOptions extends ITransaction {
+	limit: number;
+	offset: number;
+	email?: string;
+}
+
+interface IFindByCreatedAtOptions extends ITransaction {
+	min?: Date;
+	max?: Date;
+}
+
+interface ISearchResult {
+	rows: User[];
+	count: number;
 }
 
 export class UserRepository {
-	static async findByEmail(email: string, options: IFindByEmailOptions = {}): Promise<User | null> {
+	static async search(options: ISearchOptions): Promise<ISearchResult> {
+		const { email, limit, offset, transaction, } = options;
+		return User.findAndCountAll({
+			...(email ? { where: { email: email, }, } : {}),
+			limit,
+			offset,
+			transaction,
+		});
+	}
+
+	static async get(id: string, options: ITransaction = {}): Promise<User | null> {
+		const { transaction, } = options;
+		return User.findOne({
+			where: { id, },
+			transaction,
+		});
+	}
+
+	static async findByEmail(email: string, options: ITransaction = {}): Promise<User | null> {
 		const { transaction, } = options;
 
 		return User.findOne({
@@ -48,9 +77,24 @@ export class UserRepository {
 		});
 	}
 
+	static async countByCreatedAt(options: IFindByCreatedAtOptions): Promise<number> {
+		const { min, max, transaction, } = options;
+
+		return User.count({
+			where: {
+				createdAt: {
+					...( min ? { [Op.gt]: min, } : {} ),
+					...( max ? { [Op.lt]: max, } : {} ),
+				},
+			},
+			transaction,
+		});
+
+	}
+
 	static async create(
 		values: Partial<User>,
-		options: ICreateOptions = {}
+		options: ITransaction = {}
 	): Promise<User | null> {
 		const { transaction, } = options;
 
@@ -60,5 +104,22 @@ export class UserRepository {
 		}, {
 			transaction,
 		});
+	}
+
+	static async update(
+		id: string,
+		values: Partial<User>,
+		options: ITransaction = {}
+	): Promise<User | null> {
+		const { transaction, } = options;
+
+		const [,[result]] = await User.update({
+			...values,
+		}, {
+			where: { id, },
+			limit : 1,
+			transaction,
+		});
+		return result ?? null;
 	}
 }
