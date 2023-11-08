@@ -1,7 +1,10 @@
-import { BelongsTo, Column, DataType, ForeignKey, Model, } from 'sequelize-typescript';
+import { BelongsTo, Column, DataType, ForeignKey, Model, Table, } from 'sequelize-typescript';
 import { getUUID, } from '../../utils';
 import { User, } from './User';
 
+@Table({
+	paranoid: true,
+})
 export class Wallet extends Model {
     @Column({
     	primaryKey: true,
@@ -11,7 +14,7 @@ export class Wallet extends Model {
 	override id!: string;
 
     @Column({
-    	type: DataType.NUMBER,
+    	type: DataType.INTEGER,
     	defaultValue: 0,
     })
     	balance!: number;
