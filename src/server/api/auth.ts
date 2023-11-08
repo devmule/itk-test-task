@@ -5,12 +5,14 @@ import { ICredentials, IJwt, IOutputEmpty, IOutputOk, ISignUpCredentials, } from
 import { Errors, ErrorsMessages, Exception, handlerError, outputEmpty, outputOk, } from '../utils';
 import { SessionStatus, UserStatus, } from '../enums';
 import { JwtTokenHelper, } from '../helpers/JwtTokenHelper';
-import { UserRepository, } from '../repositories/UserRepository';
-import { SessionRepository, } from '../repositories/SessionRepository';
+import { UserRepository, SessionRepository, WalletRepository, } from '../repositories';
+import { Database, } from '../database/Database';
+import { Transaction, } from 'sequelize';
 
 export async function signup(
 	r: Hapi.Request
 ): Promise<IOutputEmpty | IOutputOk<{ token?: string }> | Boom> {
+	let transaction: Transaction | undefined;
 	try {
 		const cred = r.payload as ISignUpCredentials;
 		let user = await UserRepository.findByEmail(cred.email);
@@ -19,9 +21,17 @@ export async function signup(
 				email: cred.email,
 			});
 
-		user = await UserRepository.create({ email: cred.email, password: cred.password, });
+		transaction = await (await Database.instance()).transaction();
+
+		user = await UserRepository.create({ email: cred.email, password: cred.password, }, { transaction, });
+		await WalletRepository.create(user.id, { transaction, });
+
+		await transaction.commit();
+
 		return outputEmpty();
+
 	} catch (err) {
+		if (transaction) await transaction.rollback();
 		return handlerError('Failed to sign-up', err as Error);
 	}
 }

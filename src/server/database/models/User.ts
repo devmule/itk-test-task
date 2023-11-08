@@ -1,8 +1,9 @@
 import * as bcrypt from 'bcrypt';
-import { Column, DataType, HasMany, IsEmail, Model, Scopes, Table, } from 'sequelize-typescript';
+import {Column, DataType, HasMany, HasOne, IsEmail, Model, Scopes, Table,} from 'sequelize-typescript';
 import { UserStatus, } from '../../enums';
 import { getUUID, } from '../../utils';
 import { Session, } from './Session';
+import { Wallet, } from './Wallet';
 
 @Scopes({
 	defaultScope: {
@@ -65,6 +66,9 @@ export class User extends Model {
 
 	@HasMany(() => Session)
 		sessions?: Session[];
+
+	@HasOne(() => Wallet, 'userId')
+		wallet!: Wallet;
 
 	public passwordCompare(pwd: string): boolean {
 		return bcrypt.compareSync(pwd, this.password);

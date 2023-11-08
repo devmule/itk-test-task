@@ -95,7 +95,7 @@ export class UserRepository {
 	static async create(
 		values: Partial<User>,
 		options: ITransaction = {}
-	): Promise<User | null> {
+	): Promise<User> {
 		const { transaction, } = options;
 
 		return User.create({
