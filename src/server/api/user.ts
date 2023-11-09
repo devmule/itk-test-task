@@ -4,6 +4,7 @@ import { Errors, ErrorsMessages, Exception, handlerError, } from '../utils';
 import { Boom, } from '@hapi/boom';
 import { UserRepository, } from '../repositories';
 import { User, } from '../database/models';
+import * as console from "console";
 
 export async function search(r: Hapi.Request): Promise<IOutputPagination<User[]> | Boom> {
 	try {
@@ -38,7 +39,8 @@ export async function get(r: Hapi.Request): Promise<IOutputOk<User> | Boom> {
 
 export async function updateName(r: Hapi.Request): Promise<IOutputOk<User> | Boom> {
 	try {
-		const { id, firstName, lastName, } = r.payload as IUserUpdateName;
+		const { id, } = r.params as IUserGet;
+		const { firstName, lastName, } = r.payload as IUserUpdateName;
 		const result = await UserRepository.update(id, {
 			...(firstName ? { firstName, } : {}),
 			...(lastName ? { lastName, } : {}),
@@ -49,13 +51,14 @@ export async function updateName(r: Hapi.Request): Promise<IOutputOk<User> | Boo
 		}
 		throw new Exception(Errors.UserNotFound, ErrorsMessages[Errors.UserNotFound], { id, });
 	} catch (err) {
+		console.error(err);
 		return handlerError('Failed to get', err as Error);
 	}
 }
 
 export async function newUsersLastMonth(): Promise<IOutputOk<number> | Boom> {
 	try {
-		// get tim range of previous month
+		// get time range of previous month
 		// from 00:00 of 1st day of prev month
 		// to 00:00 of 1st day of current month
 		const now = new Date();

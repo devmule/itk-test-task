@@ -119,6 +119,7 @@ export class UserRepository {
 			where: { id, },
 			limit : 1,
 			transaction,
+			returning: true,
 		});
 		return result ?? null;
 	}

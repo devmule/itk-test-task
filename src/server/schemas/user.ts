@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { UserStatus, } from '../enums';
-import { idSchema, } from './common';
+import { guidSchema, } from './common';
 
 export const userSchema = Joi.object({
 	id: Joi.string(),
@@ -18,7 +18,7 @@ export const searchSchema = Joi.object({
 }).label('Searching options');
 
 export const idPropSchema = Joi.object({
-	id: idSchema,
+	id: guidSchema,
 }).label('Get user properties');
 
 export const updateSchema = Joi.object({
